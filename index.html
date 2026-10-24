@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>คำนวณกำลังแสง Splitter ถึง OLT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#EEF3F5;--sf:#fff;--ink:#10222C;--mute:#5B6F7A;--line:#D5E0E5;--brand:#0B7A75;--brand-t:#fff;--ok:#1B8A4B;--warn:#A86400;--bad:#C73A3A;--band:rgba(27,138,75,.10);--chip-ok:#E1F4E9;--chip-warn:#FBEFD6;--chip-bad:#FBE3E3;--fld:#F6F9FA;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0C171C;--sf:#13232A;--ink:#E6F1F4;--mute:#8FA7B1;--line:#25404A;--brand:#3CCBBF;--brand-t:#06201E;--ok:#4CD38A;--warn:#F0B040;--bad:#FF7A7A;--band:rgba(76,211,138,.10);--chip-ok:#12372A;--chip-warn:#3A2D10;--chip-bad:#3F1D1F;--fld:#0F1D23;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0C171C;--sf:#13232A;--ink:#E6F1F4;--mute:#8FA7B1;--line:#25404A;--brand:#3CCBBF;--brand-t:#06201E;--ok:#4CD38A;--warn:#F0B040;--bad:#FF7A7A;--band:rgba(76,211,138,.10);--chip-ok:#12372A;--chip-warn:#3A2D10;--chip-bad:#3F1D1F;--fld:#0F1D23;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.5 "IBM Plex Sans Thai","Noto Sans Thai",system-ui,sans-serif;font-variant-numeric:tabular-nums}
+.wrap{max-width:1120px;margin:0 auto;padding:20px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:18px}
+h1{font-size:24px;line-height:1.25;margin:0 0 4px;font-weight:700}
+.sub{margin:0;color:var(--mute);font-size:14px}
+h2{font-size:16px;margin:0 0 12px;font-weight:600}
+.grid{display:grid;grid-template-columns:340px 1fr;gap:16px;align-items:start}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+.card{background:var(--sf);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px}
+.f{display:grid;gap:10px;grid-template-columns:1fr 1fr}
+.f .full{grid-column:1/-1}
+label{display:block;font-size:12.5px;color:var(--mute);margin-bottom:3px}
+input,select{width:100%;font:inherit;color:var(--ink);background:var(--fld);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-height:40px}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--brand);outline-offset:1px}
+.u{position:relative}.u input{padding-right:46px}.u i{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-style:normal;font-size:12px;color:var(--mute);pointer-events:none}
+.u.l i{top:auto;transform:none;bottom:11px}
+.btn{font:inherit;font-weight:500;border:1px solid var(--line);background:var(--sf);color:var(--ink);border-radius:8px;padding:8px 12px;min-height:40px;cursor:pointer}
+.btn:hover{border-color:var(--brand)}
+.btn.p{background:var(--brand);color:var(--brand-t);border-color:var(--brand)}
+.btn.s{min-height:34px;padding:5px 10px;font-size:13.5px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.pill{display:inline-flex;gap:6px;align-items:center}
+details summary{cursor:pointer;font-weight:500;color:var(--mute);font-size:13.5px;margin-top:12px}
+.hero{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.k{background:var(--fld);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.k b{display:block;font-size:22px;line-height:1.2}.k span{font-size:12.5px;color:var(--mute)}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad)}
+.chip{display:inline-block;font-size:12.5px;font-weight:600;padding:2px 10px;border-radius:99px}
+.chip.ok{background:var(--chip-ok)}.chip.warn{background:var(--chip-warn)}.chip.bad{background:var(--chip-bad)}.chip.na{background:var(--fld);color:var(--mute)}
+.l2{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:var(--sf)}
+.l2.sel{border-color:var(--brand);box-shadow:0 0 0 1px var(--brand)}
+.l2 .top{display:flex;gap:8px;margin-bottom:10px}
+.l2 .top input{flex:1}
+.f5{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+@media(max-width:620px){.f5{grid-template-columns:1fr 1fr}.hero{grid-template-columns:1fr}}
+.res{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);font-size:14px}
+.res .v{font-weight:600}
+.dev{font-size:13px;color:var(--mute)}
+svg text{font-family:inherit}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--mute);margin-top:6px}
+.sw{display:inline-block;width:18px;height:3px;background:var(--brand);vertical-align:middle;margin-right:5px;border-radius:2px}
+.sw.o{background:none;border:2px solid var(--warn);height:9px;width:9px;border-radius:50%}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:99px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s}
+#toast.on{opacity:1}
+.note{font-size:12.5px;color:var(--mute);margin:10px 0 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>คำนวณกำลังแสง Splitter ถึง OLT</h1>
+    <p class="sub">ใส่ค่า SFP และระยะสาย ระบบคำนวณกำลังแสงที่ L1 และ L2 ให้ทันที เทียบกับค่าที่วัดจริงได้</p>
+  </div>
+  <button class="btn s" id="theme" type="button">สลับโหมด</button>
+</header>
+
+<div class="grid">
+  <div>
+    <section class="card">
+      <h2>ข้อมูลต้นทาง</h2>
+      <div class="f">
+        <div class="full"><label for="site">ชื่อพื้นที่ (ตำบล จังหวัด)</label><input id="site" data-g="top" data-k="site" placeholder="เช่น หนองจิก ปัตตานี"></div>
+        <div><label for="tx">SFP Tx Power</label><div class="u"><input id="tx" type="number" step="0.01" inputmode="decimal" data-g="top" data-k="tx"><i>dBm</i></div></div>
+        <div><label for="pon">พอร์ต PON</label><input id="pon" data-g="top" data-k="pon" placeholder="SFP PON3"></div>
+      </div>
+      <details>
+        <summary>ค่าสาย และเกณฑ์ประเมิน</summary>
+        <div class="f" style="margin-top:10px">
+          <div><label>ค่าสูญเสียสายใยแก้ว</label><div class="u"><input type="number" step="0.01" data-g="top" data-k="att"><i>dB/กม.</i></div></div>
+          <div><label>ค่า Connector ต่อจุด</label><div class="u"><input type="number" step="0.1" data-g="top" data-k="conn"><i>dB</i></div></div>
+          <div><label>ONU รับได้ต่ำสุด</label><div class="u"><input type="number" step="0.5" data-g="top" data-k="min"><i>dBm</i></div></div>
+          <div><label>เริ่มเตือนที่</label><div class="u"><input type="number" step="0.5" data-g="top" data-k="wn"><i>dBm</i></div></div>
+          <div><label>ONU รับได้สูงสุด</label><div class="u"><input type="number" step="0.5" data-g="top" data-k="max"><i>dBm</i></div></div>
+          <div><label>ส่วนต่างที่ถือว่า High loss</label><div class="u"><input type="number" step="0.1" data-g="top" data-k="dth"><i>dB</i></div></div>
+        </div>
+        <p class="note">ค่าเริ่มต้นตามไฟล์: 0.25 dB/กม., Connector 1 dB, Splitter 1:8 = 10.5 dB ส่วนเกณฑ์ ONU เป็นค่าทั่วไป ปรับได้</p>
+      </details>
+    </section>
+
+    <section class="card">
+      <h2>Splitter L1</h2>
+      <div class="f">
+        <div class="full"><label>รหัส L1</label><input data-g="l1" data-k="id" placeholder="HF9807-44:00/07:108-…"></div>
+        <div><label>อัตราแยก</label><select data-g="l1" data-k="ratio"></select></div>
+        <div><label>ค่าสูญเสีย</label><div class="u"><input type="number" step="0.1" data-g="l1" data-k="loss"><i>dB</i></div></div>
+        <div class="full"><label>ระยะ OLT ถึง L1</label><div class="u"><input type="number" step="1" min="0" inputmode="decimal" data-g="l1" data-k="dist"><i>เมตร</i></div></div>
+        <div><label>วัดจริง ขา IN</label><div class="u"><input type="number" step="0.01" data-g="l1" data-k="mIn"><i>dBm</i></div></div>
+        <div><label>วัดจริง ขา OUT</label><div class="u"><input type="number" step="0.01" data-g="l1" data-k="mOut"><i>dBm</i></div></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>ตัวอย่างข้อมูล</h2>
+      <div class="row">
+        <button class="btn s" type="button" data-ex="0">หนองจิก</button>
+        <button class="btn s" type="button" data-ex="1">กือลอง</button>
+        <button class="btn s" type="button" data-ex="clear">ล้างทั้งหมด</button>
+      </div>
+    </section>
+  </div>
+
+  <div>
+    <section class="card">
+      <h2>กำลังแสงตลอดเส้นทาง</h2>
+      <div class="hero" id="hero"></div>
+      <div id="chart"></div>
+      <div class="legend"><span><i class="sw"></i>ค่าคำนวณ</span><span><i class="sw o"></i>ค่าที่วัดจริง</span><span>แถบเขียว = ช่วงที่ ONU รับได้</span></div>
+    </section>
+
+    <section>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <h2 style="margin:0">Splitter L2</h2>
+        <button class="btn p s" type="button" id="add">เพิ่ม L2</button>
+      </div>
+      <div id="l2list"></div>
+    </section>
+  </div>
+</div>
+</div>
+<div id="toast" role="status"></div>
+
+<script>
+const RATIOS={'1:2':3.7,'1:4':7.3,'1:8':10.5,'1:16':13.8,'1:32':17.1};
+const L2=(o={})=>({id:'',ratio:'1:8',loss:10.5,dist:'',mIn:'',mOut:'',...o});
+const BASE=()=>({top:{site:'',pon:'',tx:'',att:0.25,conn:1,min:-27,wn:-25,max:-8,dth:1.5},l1:{id:'',ratio:'1:8',loss:10.5,dist:'',mIn:'',mOut:''},l2:[L2()]});
+const EX=[
+ {top:{site:'หนองจิก ปัตตานี',pon:'SFP PON3',tx:3.58},l1:{id:'HF9807-44:00/07:108-3244215',dist:10,mIn:2.555,mOut:-7.945},l2:[L2({id:'9807_044_00/07_SP0703_3588098',dist:200,mIn:-8.995,mOut:-19.49})]},
+ {top:{site:'กือลอง ยะลา',pon:'SFP PON3',tx:3.82},l1:{id:'HF9703-45:00/01:108-3137728',dist:4000,mIn:1.82,mOut:-8.68},l2:[L2({id:'9703_045_00/01_SP0105_3887830',dist:2600,mIn:-10.33,mOut:-20.83})]}
+];
+let S=BASE(),sel=0;
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const num=v=>(v===''||v==null)?NaN:parseFloat(v);
+const f2=x=>isFinite(x)?(x>0?'+':'')+x.toFixed(2):'–';
+const esc=v=>String(v??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ratioOpts=r=>Object.keys(RATIOS).map(k=>`<option ${k===r?'selected':''}>${k}</option>`).join('');
+
+function load(ex){
+  S=BASE();
+  if(ex){Object.assign(S.top,ex.top);Object.assign(S.l1,ex.l1);S.l2=ex.l2.map(x=>({...x}));}
+  sel=0;build();
+}
+function build(){
+  $$('[data-g="top"]').forEach(e=>e.value=S.top[e.dataset.k]);
+  $('[data-g="l1"][data-k="ratio"]').innerHTML=ratioOpts(S.l1.ratio);
+  $$('[data-g="l1"]').forEach(e=>{if(e.tagName==='INPUT')e.value=S.l1[e.dataset.k]});
+  $('#l2list').innerHTML=S.l2.map((r,i)=>`
+  <article class="l2" data-row="${i}">
+    <div class="top"><input data-g="l2" data-i="${i}" data-k="id" value="${esc(r.id)}" placeholder="รหัส L2 ${i+1}" aria-label="รหัส L2 ${i+1}">
+      <button class="btn s" type="button" data-del="${i}" aria-label="ลบ L2 ${i+1}">ลบ</button></div>
+    <div class="f5">
+      <div><label>อัตราแยก</label><select data-g="l2" data-i="${i}" data-k="ratio">${ratioOpts(r.ratio)}</select></div>
+      <div><label>ค่าสูญเสีย (dB)</label><input type="number" step="0.1" data-g="l2" data-i="${i}" data-k="loss" value="${r.loss}"></div>
+      <div><label>ระยะ L1 ถึง L2 (ม.)</label><input type="number" step="1" min="0" inputmode="decimal" data-g="l2" data-i="${i}" data-k="dist" value="${esc(r.dist)}"></div>
+      <div><label>วัดจริง IN (dBm)</label><input type="number" step="0.01" data-g="l2" data-i="${i}" data-k="mIn" value="${esc(r.mIn)}"></div>
+      <div><label>วัดจริง OUT (dBm)</label><input type="number" step="0.01" data-g="l2" data-i="${i}" data-k="mOut" value="${esc(r.mOut)}"></div>
+    </div>
+    <div class="res">
+      <span>IN <span class="v" data-o="in" data-i="${i}"></span></span>
+      <span>OUT <span class="v" data-o="out" data-i="${i}"></span></span>
+      <span class="chip na" data-o="chip" data-i="${i}"></span>
+      <span class="dev" data-o="dev" data-i="${i}"></span>
+      <span style="margin-left:auto" class="row"><button class="btn s" type="button" data-show="${i}">ดูกราฟ</button><button class="btn s" type="button" data-copy="${i}">คัดลอกรายงาน</button></span>
+    </div>
+  </article>`).join('');
+  update();
+}
+
+function calc(){
+  const t=S.top,att=num(t.att),cn=num(t.conn),tx=num(t.tx);
+  const d1=num(S.l1.dist)/1000||0;
+  const l1In=tx-d1*att-cn, l1Out=l1In-num(S.l1.loss);
+  const l2=S.l2.map(r=>{
+    const d=num(r.dist)/1000||0;
+    const i=l1Out-d*att-cn, o=i-num(r.loss);
+    return {i,o};
+  });
+  return {tx,l1In,l1Out,l2};
+}
+function status(o){
+  const t=S.top;
+  if(!isFinite(o))return{c:'na',t:'รอข้อมูล'};
+  if(o<num(t.min))return{c:'bad',t:'ต่ำกว่าเกณฑ์'};
+  if(o>num(t.max))return{c:'warn',t:'แรงเกินไป'};
+  if(o<num(t.wn))return{c:'warn',t:'ใกล้ขีดต่ำ'};
+  return{c:'ok',t:'ปกติ'};
+}
+function update(){
+  const c=calc(),th=num(S.top.dth);
+  let worst=null;
+  S.l2.forEach((r,i)=>{
+    const q=s=>$(`[data-o="${s}"][data-i="${i}"]`);
+    q('in').textContent=f2(c.l2[i].i)+' dBm';
+    q('out').textContent=f2(c.l2[i].o)+' dBm';
+    const mo=isFinite(num(r.mOut))?num(r.mOut):c.l2[i].o;
+    const s=status(mo);
+    const dI=num(r.mIn)-c.l2[i].i, dO=num(r.mOut)-c.l2[i].o;
+    const w=Math.min(isFinite(dI)?dI:0,isFinite(dO)?dO:0);
+    const high=isFinite(th)&&w<-th;
+    const chip=q('chip');
+    chip.className='chip '+(high?'bad':s.c);chip.textContent=high?'High loss':s.t;
+    const dv=q('dev');
+    dv.textContent=(isFinite(dI)||isFinite(dO))?`ต่างจากค่าคำนวณ IN ${f2(dI)} / OUT ${f2(dO)} dB`:'';
+    dv.className='dev '+(high?'bad':'');
+    $$('.l2').forEach(e=>e.classList.toggle('sel',+e.dataset.row===sel));
+    if(i===sel)worst={c,s,high,r};
+  });
+  if(sel>=S.l2.length)sel=0;
+  hero(c);chart(c);
+}
+function hero(c){
+  const o=c.l2[sel]?c.l2[sel].o:NaN, s=status(o);
+  const loss=c.tx-o;
+  $('#hero').innerHTML=`
+   <div class="k"><span>L1 ขา OUT</span><b>${f2(c.l1Out)}</b><span>dBm</span></div>
+   <div class="k"><span>L2 ขา OUT (ถึง ONU)</span><b class="${s.c}">${f2(o)}</b><span>dBm · ${s.t}</span></div>
+   <div class="k"><span>สูญเสียรวมจาก SFP</span><b>${isFinite(loss)?loss.toFixed(2):'–'}</b><span>dB</span></div>`;
+}
+function chart(c){
+  const r=S.l2[sel]||L2(), l2=c.l2[sel]||{i:NaN,o:NaN};
+  const pts=[c.tx,c.l1In,c.l1Out,l2.i,l2.o];
+  const meas=[NaN,num(S.l1.mIn),num(S.l1.mOut),num(r.mIn),num(r.mOut)];
+  const lab=['SFP Tx','L1 IN','L1 OUT','L2 IN','L2 OUT'];
+  const W=640,H=270,L=46,R=16,T=18,B=40;
+  const hi=Math.max(6,Math.ceil(Math.max(...pts.filter(isFinite),0)/5)*5+0), lo=Math.min(-30,Math.floor(Math.min(...pts.filter(isFinite),...meas.filter(isFinite),-28)/5)*5);
+  const y=v=>T+(hi-v)/(hi-lo)*(H-T-B), x=i=>L+i*(W-L-R)/4;
+  let g='';
+  for(let v=hi;v>=lo;v-=5)g+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-8}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="var(--mute)">${v}</text>`;
+  const mx=num(S.top.max),mn=num(S.top.min);
+  g+=`<rect x="${L}" y="${y(mx)}" width="${W-L-R}" height="${y(mn)-y(mx)}" fill="var(--band)"/>`;
+  g+=`<line x1="${L}" x2="${W-R}" y1="${y(mn)}" y2="${y(mn)}" stroke="var(--bad)" stroke-dasharray="4 4"/><text x="${W-R-2}" y="${y(mn)-5}" text-anchor="end" font-size="11" fill="var(--bad)">ขีดต่ำสุด ${mn}</text>`;
+  const valid=pts.map((v,i)=>isFinite(v)?`${x(i)},${y(v)}`:null).filter(Boolean);
+  if(valid.length>1)g+=`<polyline points="${valid.join(' ')}" fill="none" stroke="var(--brand)" stroke-width="3" stroke-linejoin="round"/>`;
+  pts.forEach((v,i)=>{
+    g+=`<text x="${x(i)}" y="${H-16}" text-anchor="middle" font-size="12" fill="var(--ink)">${lab[i]}</text>`;
+    if(isFinite(v))g+=`<circle cx="${x(i)}" cy="${y(v)}" r="5" fill="var(--brand)"/><text x="${x(i)}" y="${y(v)-11}" text-anchor="middle" font-size="12" font-weight="600" fill="var(--ink)">${f2(v)}</text>`;
+    if(isFinite(meas[i]))g+=`<circle cx="${x(i)}" cy="${y(meas[i])}" r="6" fill="none" stroke="var(--warn)" stroke-width="2.5"/>`;
+  });
+  $('#chart').innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="กราฟกำลังแสงตลอดเส้นทาง">${g}</svg>`;
+}
+function report(i){
+  const c=calc(),r=S.l2[i],t=S.top;
+  const m=x=>isFinite(num(x))?f2(num(x)):'–';
+  return `Splitter Power High loss, ${t.site||'-'}  ${r.id||'-'}, SFP Module = ${f2(c.tx)} dBm, `+
+  `Refer Power L1 Rx ขา IN = ${f2(c.l1In)} dBm, Refer Power L1 Rx ขา Out = ${f2(c.l1Out)} dBm, `+
+  `Refer Power L2 Rx ขา IN = ${f2(c.l2[i].i)} dBm, Refer Power L2 Rx ขา Out = ${f2(c.l2[i].o)} dBm, `+
+  `ค่าที่วัดได้ L2 IN = ${m(r.mIn)} dBm, L2 Out = ${m(r.mOut)} dBm, `+
+  `L1 = ${S.l1.id||'-'}, ระยะ OLT to L1 = ${num(S.l1.dist)||0} เมตร, ระยะ L1 to L2 = ${num(r.dist)||0} เมตร, `+
+  `Splitter High Loss Please Check high loss & Confirm power Splitter L2 All port`;
+}
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),1800)}
+async function copy(txt){
+  try{await navigator.clipboard.writeText(txt);toast('คัดลอกรายงานแล้ว');return}catch(e){}
+  try{const a=document.createElement('textarea');a.value=txt;document.body.appendChild(a);a.select();document.execCommand('copy');a.remove();toast('คัดลอกรายงานแล้ว')}catch(e){toast('คัดลอกไม่สำเร็จ')}
+}
+
+document.addEventListener('input',e=>{
+  const t=e.target,g=t.dataset.g;if(!g)return;
+  const k=t.dataset.k,obj=g==='l2'?S.l2[+t.dataset.i]:S[g];
+  obj[k]=t.value;
+  if(k==='ratio'){
+    obj.loss=RATIOS[t.value];
+    const lossEl=g==='l2'?$(`[data-g="l2"][data-i="${t.dataset.i}"][data-k="loss"]`):$('[data-g="l1"][data-k="loss"]');
+    lossEl.value=obj.loss;
+  }
+  if(g==='l2')sel=+t.dataset.i;
+  update();
+});
+document.addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if(b.id==='add'){S.l2.push(L2());sel=S.l2.length-1;build();}
+  else if(b.dataset.del!==undefined){if(S.l2.length>1){S.l2.splice(+b.dataset.del,1);sel=0;build();}else toast('ต้องมี L2 อย่างน้อย 1 ตัว')}
+  else if(b.dataset.show!==undefined){sel=+b.dataset.show;update();$('#chart').scrollIntoView({behavior:'smooth',block:'nearest'})}
+  else if(b.dataset.copy!==undefined){copy(report(+b.dataset.copy))}
+  else if(b.dataset.ex!==undefined){load(b.dataset.ex==='clear'?null:EX[+b.dataset.ex])}
+  else if(b.id==='theme'){const r=document.documentElement,d=matchMedia('(prefers-color-scheme: dark)').matches;const cur=r.dataset.theme||(d?'dark':'light');r.dataset.theme=cur==='dark'?'light':'dark'}
+});
+load(EX[0]);
+</script>
+</body>
+</html>
